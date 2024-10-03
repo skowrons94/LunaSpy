@@ -1,0 +1,3 @@
+/Users/kuba/Desktop/19F + p/DAQ/Spy/build/CMakeFiles/LunaSpy.dir
+/Users/kuba/Desktop/19F + p/DAQ/Spy/build/CMakeFiles/edit_cache.dir
+/Users/kuba/Desktop/19F + p/DAQ/Spy/build/CMakeFiles/rebuild_cache.dir
