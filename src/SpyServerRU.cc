@@ -59,21 +59,21 @@ void SpyServerRU::Initialize( ){
     fQshort.push_back( std::vector< std::vector<int> >( fChannels[i], std::vector<int>( 32768, 0 ) ) );
     fQlong.push_back( std::vector< std::vector<int> >( fChannels[i], std::vector<int>( 32768, 0 ) ) );
     fWave1.push_back( std::vector< std::vector<int> >( fChannels[i], std::vector<int>( 10000, 0 ) ) );
-  }
 
-  // Check if histos directory exists
-  std::string dir = "histos/";
-  struct stat info;
-  if( stat( dir.c_str( ), &info ) != 0 ){
-    std::string command = "mkdir -p " + dir;
-    system( command.c_str( ) );
-  }
+    fEnergyHist.push_back( std::vector< TH1F* >( fChannels[i] ) );
+    fQshortHist.push_back( std::vector< TH1F* >( fChannels[i] ) );
+    fQlongHist.push_back( std::vector< TH1F* >( fChannels[i] ) );
+    fWave1Hist.push_back( std::vector< TGraph* >( fChannels[i] ) );
+    fWave2Hist.push_back( std::vector< TGraph* >( fChannels[i] ) );
 
-  // Check if run directory exists
-  dir = "histos/run" + std::to_string(run) + "/";
-  if( stat( dir.c_str( ), &info ) != 0 ){
-    std::string command = "mkdir -p " + dir;
-    system( command.c_str( ) );
+    // Initialize ROOT Objects
+    for( int chan = 0; chan < fChannels[i]; chan++ ){
+      fEnergyHist[i][chan] = new TH1F( ( fNames[i] + "_Energy_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_Energy_Channel" + std::to_string( chan ) ).c_str( ), 32768, 0, 32768 );
+      fQshortHist[i][chan] = new TH1F( ( fNames[i] + "_Qshort_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_Qshort_Channel" + std::to_string( chan ) ).c_str( ), 32768, 0, 32768 );
+      fQlongHist[i][chan] = new TH1F( ( fNames[i] + "_Qlong_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_Qlong_Channel" + std::to_string( chan ) ).c_str( ), 32768, 0, 32768 );
+      fWave1Hist[i][chan] = new TGraph( 10000 );
+      fWave2Hist[i][chan] = new TGraph( 10000 );
+    }
   }
 
 }
@@ -104,7 +104,7 @@ void SpyServerRU::Save( ){
   for( int i = 0; i < fChannels.size( ); i++ ){
     for( int chan = 0; chan < fChannels[i]; chan++ ){
 
-      file.open( "histos/run" + std::to_string(run) + "/" fNames[i] + "_Histo_Channel" + std::to_string( chan ) + ".dat" );
+      file.open( "data/run" + std::to_string(run) + "/" + fNames[i] + "_Histo_Channel" + std::to_string( chan ) + ".dat" );
       for( int j = 0; j < 32768; j++ ){
         file << j << " " << fEnergy[i][chan][j]  << std::endl;
       }
@@ -137,6 +137,7 @@ void SpyServerRU::Start( ){
     stopCall  = 0;
     
     spyThread = new boost::thread( &SpyServerRU::GetNextEvent, this );
+    rootThread = new boost::thread( &SpyServerRU::serverROOT, this, 33333 );
 
   }
 
@@ -183,8 +184,10 @@ void SpyServerRU::FillGraphs( uint32_t* inpBuffer, uint32_t board, uint32_t chan
     if( dataForm.CheckEnabled( "DT" ) ){
       temp = static_cast<short>(project_range( formatSample.first   , formatSample.second   , std::bitset<32>(inpBuffer[idx])).to_ulong());
       fWave1[board][chan][idx] = temp;
+      fWave1Hist[board][chan]->SetPoint( idx, idx, temp );
       temp = static_cast<short>(project_range( formatSample.first+16, formatSample.second+16, std::bitset<32>(inpBuffer[idx])).to_ulong());
       fWave2[board][chan][idx] = temp;
+      fWave2Hist[board][chan]->SetPoint( idx, idx, temp );
       //temp = static_cast<bool>(project_range(  formatDP1.first      , formatDP1.second      , std::bitset<32>(inpBuffer[idx])).to_ulong());
       //fDigitalProbe1[board][chan]->SetPoint( idx, idx/2, temp );
       //temp = static_cast<bool>(project_range(  formatDP1.first+16   , formatDP1.second+16   , std::bitset<32>(inpBuffer[idx])).to_ulong());
@@ -197,8 +200,10 @@ void SpyServerRU::FillGraphs( uint32_t* inpBuffer, uint32_t board, uint32_t chan
     else{
       temp = static_cast<short>(project_range( formatSample.first   , formatSample.second   , std::bitset<32>(inpBuffer[idx])).to_ulong());
       fWave1[board][chan][2*idx] = temp;
+      fWave1Hist[board][chan]->SetPoint( 2*idx, 2*idx, temp );
       temp = static_cast<short>(project_range( formatSample.first+16, formatSample.second+16, std::bitset<32>(inpBuffer[idx])).to_ulong());
       fWave1[board][chan][2*idx+1] = temp;
+      fWave1Hist[board][chan]->SetPoint( 2*idx+1, 2*idx+1, temp );
       //temp = static_cast<short>(project_range( formatDP1.first      , formatDP1.second      , std::bitset<32>(inpBuffer[idx])).to_ulong());
       //fDigitalProbe1[board][chan]->SetPoint( 2*idx, 2*idx, temp );
       //temp = static_cast<short>(project_range( formatDP1.first+16   , formatDP1.second+16   , std::bitset<32>(inpBuffer[idx])).to_ulong());
@@ -368,6 +373,7 @@ void SpyServerRU::UnpackPHA( uint32_t* inpBuffer, uint32_t& board, std::bitset<8
 
       // Filling ROOT files
       fEnergy[board][chanNum][energy]++;
+      fEnergyHist[board][chanNum]->Fill( energy );
 
     }
 
@@ -503,6 +509,9 @@ void SpyServerRU::UnpackPSD( uint32_t* inpBuffer, uint32_t& board, std::bitset<8
       fQshort[board][chanNum][qshort]++;
       fQlong[board][chanNum][qlong]++;
 
+      fQshortHist[board][chanNum]->Fill( qshort );
+      fQlongHist[board][chanNum]->Fill( qlong );
+
     }
       
     startingPos+=coupleAggregateSize;
@@ -571,4 +580,72 @@ void SpyServerRU::GetNextEvent( ){
 
   }
 
+}
+
+void SpyServerRU::serverROOT(int port) {
+    // Create a server socket on the given port
+    TServerSocket* serverSocket = new TServerSocket(port, kTRUE);
+    if (!serverSocket->IsValid()) {
+        std::cerr << "Error: Server socket creation failed!" << std::endl;
+        return;
+    }
+
+    while( startCall ){
+
+      // Wait for a connection
+      clientSocket = serverSocket->Accept();
+      if (!clientSocket || !clientSocket->IsValid()) {
+        std::cerr << "Error: Failed to accept client connection!" << std::endl;
+        delete serverSocket;
+        return;
+      }
+
+      // Receive an object from the client
+      //TObject* receivedObject = receiveRootObject(clientSocket);
+      //if (receivedObject) {
+      //    std::cout << "Received object: " << receivedObject->GetName() << std::endl;
+      //}
+  
+      sendROOT(clientSocket);
+    }
+
+    // Clean up
+    delete clientSocket;
+    delete serverSocket;
+}
+
+void SpyServerRU::sendROOT(TSocket* socket) {
+    if (!socket) return;
+
+    // Create a ROOT message
+    TMessage message(kMESS_OBJECT);
+  
+    // Send all the histograms
+    TH1F* histo;
+    TGraph* graph;
+    for( int i = 0; i < fChannels.size( ); i++ ){
+      for( int chan = 0; chan < fChannels[i]; chan++ ){
+        if( fFirmware[i] == 0 ){
+          histo = fEnergyHist[i][chan];
+          message.WriteObject(histo);
+          graph = fWave1Hist[i][chan];
+          message.WriteObject(graph);
+          graph = fWave2Hist[i][chan];
+          message.WriteObject(graph);
+        }
+        else if( fFirmware[i] == 1 ){
+          histo = fQshortHist[i][chan];
+          message.WriteObject(histo);
+          histo = fQlongHist[i][chan];
+          message.WriteObject(histo);
+          graph = fWave1Hist[i][chan];
+          message.WriteObject(graph);
+          graph = fWave2Hist[i][chan];
+          message.WriteObject(graph);
+        }
+      }
+    }
+
+    // Send the message
+    socket->Send(message);
 }

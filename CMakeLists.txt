@@ -12,10 +12,12 @@ set(HEADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 #set(CMAKE_AUTOUIC ON)
 #set(CMAKE_AUTOUIC_SEARCH_PATHS ${UI_DIR})
 
+find_package(ROOT REQUIRED COMPONENTS RIO Net)
 find_package(Boost COMPONENTS thread system serialization REQUIRED)
 
 include_directories(
   ${HEADER_DIR}
+  ${ROOT_INCLUDE_DIRS}
 )
 
 add_executable(LunaSpy
@@ -30,4 +32,4 @@ add_executable(LunaSpy
 
 target_compile_features(LunaSpy PUBLIC cxx_std_14)
 
-target_link_libraries(LunaSpy PRIVATE ${Boost_LIBRARIES} )
+target_link_libraries(LunaSpy PRIVATE ${Boost_LIBRARIES} ${ROOT_LIBRARIES} )

@@ -8,6 +8,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <TObject.h>
+#include <TSocket.h>
+#include <TServerSocket.h>
+#include <TMessage.h>
+#include <TH1F.h>
+#include <TGraph.h>
+
 #include <boost/thread.hpp>
 
 #include "XDAQSpy.h"
@@ -48,6 +55,10 @@ public:
   void UpdateWave( );                      // Changes the fWaveUpdate
   void UpdateGraphs( );                    // Updates the style of the TGraphs
 
+  // ROOT Socket
+  void serverROOT( int port );
+  void sendROOT( TSocket* socket );
+
   // Thread variables
   int startCall;
   int stopCall;
@@ -63,6 +74,12 @@ private:
   std::vector< std::vector< std::vector<int> > > fQlong; // Container for the Qlong histograms
   std::vector< std::vector< std::vector<int> > > fWave1; // Container for the wave1 histograms
   std::vector< std::vector< std::vector<int> > > fWave2; // Container for the wave1 histograms
+
+  std::vector< std::vector< TH1F* > > fEnergyHist; // Container for the energy histograms
+  std::vector< std::vector< TH1F* > > fQshortHist; // Container for the Qshort histograms
+  std::vector< std::vector< TH1F* > > fQlongHist; // Container for the Qlong histograms
+  std::vector< std::vector< TGraph* > > fWave1Hist; // Container for the wave1 histograms
+  std::vector< std::vector< TGraph* > > fWave2Hist; // Container for the wave1 histograms
 
   std::map<int,DataFrame> fDataFrame; // Container for the data frames
   std::map<int,int> fRO; // Container for Roll Over flags
@@ -80,6 +97,13 @@ private:
   int fVerbose;
 
   int run;
+
+  // ROOT socket variables
+  TSocket* fSocket;
+  TMessage* fMessage;
+  TServerSocket* serverSocket;
+  TSocket* clientSocket;
+  boost::thread* rootThread;
   
 };
 
