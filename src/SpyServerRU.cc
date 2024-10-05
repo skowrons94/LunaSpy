@@ -5,6 +5,8 @@
 #include <bitset>
 #include <sstream>
 
+#include <TList.h>
+
 #include "SpyServerRU.h"
 
 SpyServerRU::SpyServerRU( std::vector<std::string> names, std::vector<int> channels, std::vector<int> firmware, int nRun, std::string host ) : run( nRun ), hostname( host )
@@ -623,25 +625,19 @@ void SpyServerRU::sendROOT(TSocket* socket) {
     // Send all the histograms
     TH1F* histo;
     TGraph* graph;
+    TList* list = new TList( );
     for( int i = 0; i < fChannels.size( ); i++ ){
       for( int chan = 0; chan < fChannels[i]; chan++ ){
         if( fFirmware[i] == 0 ){
-          histo = fEnergyHist[i][chan];
-          message.WriteObject(histo);
-          graph = fWave1Hist[i][chan];
-          message.WriteObject(graph);
-          graph = fWave2Hist[i][chan];
-          message.WriteObject(graph);
+          list->Add( fEnergyHist[i][chan]; );
+          list->Add( fWave1Hist[i][chan] );
+          list->Add( fWave2Hist[i][chan] );
         }
         else if( fFirmware[i] == 1 ){
-          histo = fQshortHist[i][chan];
-          message.WriteObject(histo);
-          histo = fQlongHist[i][chan];
-          message.WriteObject(histo);
-          graph = fWave1Hist[i][chan];
-          message.WriteObject(graph);
-          graph = fWave2Hist[i][chan];
-          message.WriteObject(graph);
+          list->Add( fQshortHist[i][chan] );
+          list->Add( fQlongHist[i][chan] );
+          list->Add( fWave1Hist[i][chan] );
+          list->Add( fWave2Hist[i][chan] );
         }
       }
     }
