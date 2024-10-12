@@ -587,15 +587,18 @@ void SpyServerRU::GetNextEvent( ){
 
 void SpyServerRU::rootServer( ){
 
-  // This is a simple ROOT server 
+  // This is a simple ROOT server
+  std::cout << "ROOT Server started" << std::endl;
   serverSocket = new TServerSocket( 6060, kTRUE );
 
   while( startCall ){
 
+    std::cout << "Waiting for connection" << std::endl;
     clientSocket = serverSocket->Accept( );
 
     if( clientSocket ){
 
+      std::cout << "Connected" << std::endl;
       // First receive a message, if it is 1 then send the histograms, if it is 2 then send the waves
       TMessage* cmd;
       clientSocket->Recv( cmd );
