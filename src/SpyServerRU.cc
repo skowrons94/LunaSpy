@@ -612,6 +612,10 @@ void SpyServerRU::rootServer( ){
         serverSocket->Close( );
         serverSocket = nullptr;
         startCall = 0;
+        xdaq->Disconnect( );
+        spyThread->join();
+        xdaq->Close( ); 
+        break;
       }
 
       // Send PHA histograms

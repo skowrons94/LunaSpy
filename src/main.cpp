@@ -41,5 +41,7 @@ int main(int argc, char* argv[]) {
         server->Save( );
     }
 
+    delete server;
+
     return 0;
 }
