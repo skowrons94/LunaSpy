@@ -47,6 +47,7 @@ SpyServerRU::~SpyServerRU(){
     startCall = 0;
     stopCall  = 1;
     spyThread->join();
+    rootThread->join();
   }
 
   delete xdaq;
@@ -587,7 +588,7 @@ void SpyServerRU::GetNextEvent( ){
 void SpyServerRU::rootServer( ){
 
   // This is a simple ROOT server 
-  serverSocket = new TServerSocket( 9999, kTRUE );
+  serverSocket = new TServerSocket( 6060, kTRUE );
 
   while( startCall ){
 
@@ -595,7 +596,19 @@ void SpyServerRU::rootServer( ){
 
     if( clientSocket ){
 
-      // Collect all the histograms by cloning them since they are used in the main thread
+      // First receive a message, if it is "GET" then send the histograms, if it is "STOP" then stop the server
+      TMessage* message = clientSocket->RecvMsg( );
+      if( message->What() == kMESS_STRING ){
+        std::string command;
+        *message >> command;
+        if( command == "STOP" ){
+          clientSocket->Close( );
+          clientSocket = nullptr;
+          serverSocket->Close( );
+          serverSocket = nullptr;
+          startCall = 0;
+        }
+      }
 
       // Send PHA histograms
       std::vector<TH1F*> histograms;
