@@ -599,15 +599,14 @@ void SpyServerRU::rootServer( ){
     if( clientSocket ){
 
       std::cout << "Connected" << std::endl;
-      // First receive a message, if it is 1 then send the histograms, if it is 2 then send the waves
-      TMessage* cmd;
-      clientSocket->Recv( cmd );
-      int messageType;
-      *cmd >> messageType;
+      // First receive a message, if it is stop, then close the connection
+      char str[32];
+      clientSocket->Recv(str,32);
+      std::string messageType(str);
 
       std::cout << "Message Type: " << messageType << std::endl;
 
-      if( messageType == 2){
+      if( messageType == "stop"){
         clientSocket->Close( );
         clientSocket = nullptr;
         serverSocket->Close( );
