@@ -588,7 +588,8 @@ void SpyServerRU::rootServer( ){
 
   // This is a simple ROOT server 
 
-  serverSocket = new TServerSocket( 9090, kTRUE );
+  std::cout << "ROOT Server started" << std::endl;
+  serverSocket = new TServerSocket( 9999, kTRUE );
 
   while( startCall ){
 
@@ -596,16 +597,20 @@ void SpyServerRU::rootServer( ){
 
     if( clientSocket ){
 
+      std::cout << "Client connected" << std::endl;
+
       // Collect all the histograms by cloning them since they are used in the main thread
       std::vector<TH1F*> histograms;
       for( auto it = fEnergyHist.begin(); it != fEnergyHist.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
+          std::cout << "Packing histogram " << (*jt)->GetName() << std::endl;
           histograms.push_back( (TH1F*)(*jt)->Clone() );
         }
       }
       
       for (const auto& hist : histograms) {
           TMessage message(kMESS_OBJECT);
+          std::cout << "Sending histogram " << hist->GetName() << std::endl;
           message.WriteObject(hist);
           clientSocket->Send(message);
         }
@@ -613,6 +618,7 @@ void SpyServerRU::rootServer( ){
     }
 
     clientSocket->Close();
+    clientSocket = nullptr;
 
   }
 
