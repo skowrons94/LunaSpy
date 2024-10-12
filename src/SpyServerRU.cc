@@ -139,7 +139,7 @@ void SpyServerRU::Start( ){
     stopCall  = 0;
     
     spyThread = new boost::thread( &SpyServerRU::GetNextEvent, this );
-    rootThread = new boost::thread( &SpyServerRU::serverROOT, this, 33333 );
+    rootThread = new boost::thread( &SpyServerRU::rootServer, this );
 
   }
 
@@ -584,64 +584,36 @@ void SpyServerRU::GetNextEvent( ){
 
 }
 
-void SpyServerRU::serverROOT(int port) {
-    // Create a server socket on the given port
-    TServerSocket* serverSocket = new TServerSocket(port, kTRUE);
-    if (!serverSocket->IsValid()) {
-        std::cerr << "Error: Server socket creation failed!" << std::endl;
-        return;
-    }
+void SpyServerRU::rootServer( ){
 
-    while( startCall ){
+  // This is a simple ROOT server 
 
-      // Wait for a connection
-      clientSocket = serverSocket->Accept();
-      if (!clientSocket || !clientSocket->IsValid()) {
-        std::cerr << "Error: Failed to accept client connection!" << std::endl;
-        delete serverSocket;
-        return;
-      }
+  serverSocket = new TServerSocket( 9090, kTRUE );
 
-      // Receive an object from the client
-      //TObject* receivedObject = receiveRootObject(clientSocket);
-      //if (receivedObject) {
-      //    std::cout << "Received object: " << receivedObject->GetName() << std::endl;
-      //}
-  
-      sendROOT(clientSocket);
-    }
+  while( startCall ){
 
-    // Clean up
-    delete clientSocket;
-    delete serverSocket;
-}
+    clientSocket = serverSocket->Accept( );
 
-void SpyServerRU::sendROOT(TSocket* socket) {
-    if (!socket) return;
+    if( clientSocket ){
 
-    // Create a ROOT message
-    TMessage message(kMESS_OBJECT);
-  
-    // Send all the histograms
-    TH1F* histo;
-    TGraph* graph;
-    TList* list = new TList( );
-    for( int i = 0; i < fChannels.size( ); i++ ){
-      for( int chan = 0; chan < fChannels[i]; chan++ ){
-        if( fFirmware[i] == 0 ){
-          list->Add( fEnergyHist[i][chan]; );
-          list->Add( fWave1Hist[i][chan] );
-          list->Add( fWave2Hist[i][chan] );
-        }
-        else if( fFirmware[i] == 1 ){
-          list->Add( fQshortHist[i][chan] );
-          list->Add( fQlongHist[i][chan] );
-          list->Add( fWave1Hist[i][chan] );
-          list->Add( fWave2Hist[i][chan] );
+      // Collect all the histograms by cloning them since they are used in the main thread
+      std::vector<TH1F*> histograms;
+      for( auto it = fEnergyHist.begin(); it != fEnergyHist.end(); it++ ){
+        for( auto jt = it->begin(); jt != it->end(); jt++ ){
+          histograms.push_back( (TH1F*)(*jt)->Clone() );
         }
       }
+      
+      for (const auto& hist : histograms) {
+          TMessage message(kMESS_OBJECT);
+          message.WriteObject(hist);
+          clientSocket->Send(message);
+        }
+
     }
 
-    // Send the message
-    socket->Send(message);
+    clientSocket->Close();
+
+  }
+
 }

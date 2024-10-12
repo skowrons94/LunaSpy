@@ -56,8 +56,7 @@ public:
   void UpdateGraphs( );                    // Updates the style of the TGraphs
 
   // ROOT Socket
-  void serverROOT( int port );
-  void sendROOT( TSocket* socket );
+  void rootServer( );
 
   // Thread variables
   int startCall;
