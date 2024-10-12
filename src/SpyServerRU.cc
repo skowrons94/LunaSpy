@@ -596,18 +596,20 @@ void SpyServerRU::rootServer( ){
 
     if( clientSocket ){
 
-      // First receive a message, if it is "GET" then send the histograms, if it is "STOP" then stop the server
-      TMessage* message = clientSocket->RecvMsg( );
-      if( message->What() == kMESS_STRING ){
-        std::string command;
-        *message >> command;
-        if( command == "STOP" ){
-          clientSocket->Close( );
-          clientSocket = nullptr;
-          serverSocket->Close( );
-          serverSocket = nullptr;
-          startCall = 0;
-        }
+      // First receive a message, if it is 1 then send the histograms, if it is 2 then send the waves
+      TMessage* cmd;
+      clientSocket->Recv( cmd );
+      int messageType;
+      *cmd >> messageType;
+
+      std::cout << "Message Type: " << messageType << std::endl;
+
+      if( messageType == 2){
+        clientSocket->Close( );
+        clientSocket = nullptr;
+        serverSocket->Close( );
+        serverSocket = nullptr;
+        startCall = 0;
       }
 
       // Send PHA histograms
