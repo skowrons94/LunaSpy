@@ -70,9 +70,9 @@ void SpyServerRU::Initialize( ){
 
     // Initialize ROOT Objects
     for( int chan = 0; chan < fChannels[i]; chan++ ){
-      fEnergyHist[i][chan] = new TH1F( ( fNames[i] + "_Energy_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_Energy_Channel" + std::to_string( chan ) ).c_str( ), 32768, 0, 32768 );
-      fQshortHist[i][chan] = new TH1F( ( fNames[i] + "_Qshort_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_Qshort_Channel" + std::to_string( chan ) ).c_str( ), 32768, 0, 32768 );
-      fQlongHist[i][chan] = new TH1F( ( fNames[i] + "_Qlong_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_Qlong_Channel" + std::to_string( chan ) ).c_str( ), 32768, 0, 32768 );
+      fEnergyHist[i][chan] = new TH1F( ( fNames[i] + "_" + std::to_string( i ) + "_Energy_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_" + std::to_string( i ) + "_Energy_Channel" + std::to_string( chan ) ).c_str( ), 32768, 0, 32768 );
+      fQshortHist[i][chan] = new TH1F( ( fNames[i] + "_" + std::to_string( i ) + "_Qshort_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_" + std::to_string( i ) + "_Qshort_Channel" + std::to_string( chan ) ).c_str( ), 32768, 0, 32768 );
+      fQlongHist[i][chan] = new TH1F( ( fNames[i] + "_" + std::to_string( i ) + "_Qlong_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_" + std::to_string( i ) + "_Qlong_Channel" + std::to_string( chan ) ).c_str( ), 32768, 0, 32768 );
       fWave1Hist[i][chan] = new TGraph( 10000 );
       fWave2Hist[i][chan] = new TGraph( 10000 );
     }
@@ -587,35 +587,79 @@ void SpyServerRU::GetNextEvent( ){
 void SpyServerRU::rootServer( ){
 
   // This is a simple ROOT server 
-
-  std::cout << "ROOT Server started" << std::endl;
   serverSocket = new TServerSocket( 9999, kTRUE );
 
   while( startCall ){
 
-    std::cout << "Waiting for connection..." << std::endl;
     clientSocket = serverSocket->Accept( );
-    std::cout << "Received!" << std::endl;
 
     if( clientSocket ){
 
-      std::cout << "Client connected" << std::endl;
-
       // Collect all the histograms by cloning them since they are used in the main thread
+
+      // Send PHA histograms
       std::vector<TH1F*> histograms;
       for( auto it = fEnergyHist.begin(); it != fEnergyHist.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          std::cout << "Packing histogram " << (*jt)->GetName() << std::endl;
           histograms.push_back( (TH1F*)(*jt)->Clone() );
         }
       }
       
       for (const auto& hist : histograms) {
           TMessage message(kMESS_OBJECT);
-          std::cout << "Sending histogram " << hist->GetName() << std::endl;
           message.WriteObject(hist);
           clientSocket->Send(message);
         }
+
+      // Send Qshort histograms
+      histograms.clear();
+      for( auto it = fQshortHist.begin(); it != fQshortHist.end(); it++ ){
+        for( auto jt = it->begin(); jt != it->end(); jt++ ){
+          histograms.push_back( (TH1F*)(*jt)->Clone() );
+        }
+      }
+
+      for (const auto& hist : histograms) {
+          TMessage message(kMESS_OBJECT);
+          message.WriteObject(hist);
+          clientSocket->Send(message);
+        }
+
+      // Send Qlong histograms
+      histograms.clear();
+      for( auto it = fQlongHist.begin(); it != fQlongHist.end(); it++ ){
+        for( auto jt = it->begin(); jt != it->end(); jt++ ){
+          histograms.push_back( (TH1F*)(*jt)->Clone() );
+        }
+      }
+
+      for (const auto& hist : histograms) {
+          TMessage message(kMESS_OBJECT);
+          message.WriteObject(hist);
+          clientSocket->Send(message);
+        }
+
+      // Send Wave1 histograms
+      std::vector<TGraph*> graphs;
+      for( auto it = fWave1Hist.begin(); it != fWave1Hist.end(); it++ ){
+        for( auto jt = it->begin(); jt != it->end(); jt++ ){
+          graphs.push_back( (TGraph*)(*jt)->Clone() );
+        }
+      }
+
+      for (const auto& graph : graphs) {
+          TMessage message(kMESS_OBJECT);
+          message.WriteObject(graph);
+          clientSocket->Send(message);
+        }
+
+      // Send Wave2 histograms
+      graphs.clear();
+      for( auto it = fWave2Hist.begin(); it != fWave2Hist.end(); it++ ){
+        for( auto jt = it->begin(); jt != it->end(); jt++ ){
+          graphs.push_back( (TGraph*)(*jt)->Clone() );
+        }
+      }
 
     }
 
