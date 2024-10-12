@@ -593,7 +593,9 @@ void SpyServerRU::rootServer( ){
 
   while( startCall ){
 
+    std::cout << "Waiting for connection..." << std::endl;
     clientSocket = serverSocket->Accept( );
+    std::cout << "Received!" << std::endl;
 
     if( clientSocket ){
 
