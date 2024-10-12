@@ -588,23 +588,18 @@ void SpyServerRU::GetNextEvent( ){
 void SpyServerRU::rootServer( ){
 
   // This is a simple ROOT server
-  std::cout << "ROOT Server started" << std::endl;
   serverSocket = new TServerSocket( 6060, kTRUE );
 
   while( startCall ){
 
-    std::cout << "Waiting for connection" << std::endl;
     clientSocket = serverSocket->Accept( );
 
     if( clientSocket ){
 
-      std::cout << "Connected" << std::endl;
       // First receive a message, if it is stop, then close the connection
       char str[32];
       clientSocket->Recv(str,32);
       std::string messageType(str);
-
-      std::cout << "Message Type: " << messageType << std::endl;
 
       if( messageType == "stop"){
         clientSocket->Close( );
