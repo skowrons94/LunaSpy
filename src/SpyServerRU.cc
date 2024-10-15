@@ -69,6 +69,9 @@ void SpyServerRU::Initialize( ){
     fWave1Hist.push_back( std::vector< TGraph* >( fChannels[i] ) );
     fWave2Hist.push_back( std::vector< TGraph* >( fChannels[i] ) );
 
+    fWave1HistT.push_back( std::vector< TH1F* >( fChannels[i] ) );
+    fWave2HistT.push_back( std::vector< TH1F* >( fChannels[i] ) );
+
     // Initialize ROOT Objects
     for( int chan = 0; chan < fChannels[i]; chan++ ){
       fEnergyHist[i][chan] = new TH1F( ( fNames[i] + "_" + std::to_string( i ) + "_Energy_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_" + std::to_string( i ) + "_Energy_Channel" + std::to_string( chan ) ).c_str( ), 32768, 0, 32768 );
@@ -76,6 +79,9 @@ void SpyServerRU::Initialize( ){
       fQlongHist[i][chan] = new TH1F( ( fNames[i] + "_" + std::to_string( i ) + "_Qlong_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_" + std::to_string( i ) + "_Qlong_Channel" + std::to_string( chan ) ).c_str( ), 32768, 0, 32768 );
       fWave1Hist[i][chan] = new TGraph( 10000 );
       fWave2Hist[i][chan] = new TGraph( 10000 );
+
+      fWave1HistT[i][chan] = new TH1F( ( fNames[i] + "_" + std::to_string( i ) + "_Wave1_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_" + std::to_string( i ) + "_Wave1_Channel" + std::to_string( chan ) ).c_str( ), 10000, 0, 10000 );
+      fWave2HistT[i][chan] = new TH1F( ( fNames[i] + "_" + std::to_string( i ) + "_Wave2_Channel" + std::to_string( chan ) ).c_str( ), ( fNames[i] + "_" + std::to_string( i ) + "_Wave2_Channel" + std::to_string( chan ) ).c_str( ), 10000, 0, 10000 );
     }
   }
 
@@ -188,9 +194,11 @@ void SpyServerRU::FillGraphs( uint32_t* inpBuffer, uint32_t board, uint32_t chan
       temp = static_cast<short>(project_range( formatSample.first   , formatSample.second   , std::bitset<32>(inpBuffer[idx])).to_ulong());
       fWave1[board][chan][idx] = temp;
       fWave1Hist[board][chan]->SetPoint( idx, idx, temp );
+      fWave1HistT[board][chan]->SetBinContent( idx, temp );
       temp = static_cast<short>(project_range( formatSample.first+16, formatSample.second+16, std::bitset<32>(inpBuffer[idx])).to_ulong());
       fWave2[board][chan][idx] = temp;
       fWave2Hist[board][chan]->SetPoint( idx, idx, temp );
+      fWave2HistT[board][chan]->SetBinContent( idx, temp );
       //temp = static_cast<bool>(project_range(  formatDP1.first      , formatDP1.second      , std::bitset<32>(inpBuffer[idx])).to_ulong());
       //fDigitalProbe1[board][chan]->SetPoint( idx, idx/2, temp );
       //temp = static_cast<bool>(project_range(  formatDP1.first+16   , formatDP1.second+16   , std::bitset<32>(inpBuffer[idx])).to_ulong());
@@ -204,9 +212,11 @@ void SpyServerRU::FillGraphs( uint32_t* inpBuffer, uint32_t board, uint32_t chan
       temp = static_cast<short>(project_range( formatSample.first   , formatSample.second   , std::bitset<32>(inpBuffer[idx])).to_ulong());
       fWave1[board][chan][2*idx] = temp;
       fWave1Hist[board][chan]->SetPoint( 2*idx, 2*idx, temp );
+      fWave1HistT[board][chan]->SetBinContent( 2*idx, temp );
       temp = static_cast<short>(project_range( formatSample.first+16, formatSample.second+16, std::bitset<32>(inpBuffer[idx])).to_ulong());
       fWave1[board][chan][2*idx+1] = temp;
       fWave1Hist[board][chan]->SetPoint( 2*idx+1, 2*idx+1, temp );
+      fWave1HistT[board][chan]->SetBinContent( 2*idx+1, temp );
       //temp = static_cast<short>(project_range( formatDP1.first      , formatDP1.second      , std::bitset<32>(inpBuffer[idx])).to_ulong());
       //fDigitalProbe1[board][chan]->SetPoint( 2*idx, 2*idx, temp );
       //temp = static_cast<short>(project_range( formatDP1.first+16   , formatDP1.second+16   , std::bitset<32>(inpBuffer[idx])).to_ulong());
@@ -656,26 +666,32 @@ void SpyServerRU::rootServer( ){
         }
 
       // Send Wave1 histograms
-      std::vector<TGraph*> graphs;
-      for( auto it = fWave1Hist.begin(); it != fWave1Hist.end(); it++ ){
+      std::vector<TH1F*> waveHist;
+      for( auto it = fWave1HistT.begin(); it != fWave1HistT.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          graphs.push_back( (TGraph*)(*jt)->Clone() );
+          waveHist.push_back( (TH1F*)(*jt)->Clone() );
         }
       }
 
-      for (const auto& graph : graphs) {
+      for (const auto& hist : waveHist) {
           TMessage message(kMESS_OBJECT);
-          message.WriteObject(graph);
+          message.WriteObject(hist);
           clientSocket->Send(message);
         }
 
       // Send Wave2 histograms
-      graphs.clear();
-      for( auto it = fWave2Hist.begin(); it != fWave2Hist.end(); it++ ){
+      waveHist.clear();
+      for( auto it = fWave2HistT.begin(); it != fWave2HistT.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          graphs.push_back( (TGraph*)(*jt)->Clone() );
+          waveHist.push_back( (TH1F*)(*jt)->Clone() );
         }
       }
+
+      for (const auto& hist : waveHist) {
+          TMessage message(kMESS_OBJECT);
+          message.WriteObject(hist);
+          clientSocket->Send(message);
+        }
 
     }
 

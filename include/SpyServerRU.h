@@ -78,7 +78,10 @@ private:
   std::vector< std::vector< TH1F* > > fQshortHist; // Container for the Qshort histograms
   std::vector< std::vector< TH1F* > > fQlongHist; // Container for the Qlong histograms
   std::vector< std::vector< TGraph* > > fWave1Hist; // Container for the wave1 histograms
-  std::vector< std::vector< TGraph* > > fWave2Hist; // Container for the wave1 histograms
+  std::vector< std::vector< TGraph* > > fWave2Hist; // Container for the wave2 histograms
+
+  std::vector< std::vector< TH1F* > > fWave1HistT; // Container for the wave1 histograms
+  std::vector< std::vector< TH1F* > > fWave2HistT; // Container for the wave2 histograms
 
   std::map<int,DataFrame> fDataFrame; // Container for the data frames
   std::map<int,int> fRO; // Container for Roll Over flags
