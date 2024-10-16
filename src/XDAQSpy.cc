@@ -128,7 +128,10 @@ int XDAQSpy::GetNextBuffer( char* buff ){
   
   uint32_t buf_size = i2omsg->PvtMessageFrame.StdMessageFrame.MessageSize.LowPart << 2;
 
-  if(buf_size == 0) return 0;
+  if(buf_size == 0) {
+    delete []buffer_header;
+    return 0;
+  }
   if(fVerbose > 10)
     printf("Buffer size = %i ",buf_size);
 

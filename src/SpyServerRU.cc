@@ -14,12 +14,10 @@ SpyServerRU::SpyServerRU( std::vector<std::string> names, std::vector<int> chann
 
   startCall = 0;
   stopCall  = 1;
-
   fVerbose = 0;
 
   // Creating the DataFrames
   for( int i = 0; i < names.size( ); i++ ){
-
     fDataFrame[i] = DataFrame( firmware[i], names[i] );
     fDataFrame[i].Build( );
     fRO[i] = 0;
@@ -62,6 +60,7 @@ void SpyServerRU::Initialize( ){
     fQshort.push_back( std::vector< std::vector<int> >( fChannels[i], std::vector<int>( 32768, 0 ) ) );
     fQlong.push_back( std::vector< std::vector<int> >( fChannels[i], std::vector<int>( 32768, 0 ) ) );
     fWave1.push_back( std::vector< std::vector<int> >( fChannels[i], std::vector<int>( 10000, 0 ) ) );
+    fWave2.push_back( std::vector< std::vector<int> >( fChannels[i], std::vector<int>( 10000, 0 ) ) );
 
     fEnergyHist.push_back( std::vector< TH1F* >( fChannels[i] ) );
     fQshortHist.push_back( std::vector< TH1F* >( fChannels[i] ) );
@@ -99,6 +98,7 @@ void SpyServerRU::Reset( ){
       }
       for( int j = 0; j < 10000; j++ ){
         fWave1[i][chan][j] = 0;
+        fWave2[i][chan][j] = 0;
       }
     }
   }
@@ -188,16 +188,30 @@ void SpyServerRU::FillGraphs( uint32_t* inpBuffer, uint32_t board, uint32_t chan
   std::pair<int,int> formatDP1    = dataForm.GetFormat( "DP1" );
   std::pair<int,int> formatDP2    = dataForm.GetFormat( "DP2" );
 
+  if( fVerbose ){
+    std::cout << "NumSamples: " << numSamples << std::endl;
+    std::cout << "Sample: " << formatSample.first << " " << formatSample.second << std::endl;
+    std::cout << "DP1: " << formatDP1.first << " " << formatDP1.second << std::endl;
+    std::cout << "DP2: " << formatDP2.first << " " << formatDP2.second << std::endl;
+  }
+
   short temp;
   for( uint16_t idx = 0; idx < numSamples; ++idx ){
     if( dataForm.CheckEnabled( "DT" ) ){
+      if( fVerbose ) std::cout << "DT Enabled" << std::endl;
       temp = static_cast<short>(project_range( formatSample.first   , formatSample.second   , std::bitset<32>(inpBuffer[idx])).to_ulong());
+      if( fVerbose ) std::cout << temp << std::endl;
       fWave1[board][chan][idx] = temp;
+      if( fVerbose ) std::cout << "Setting point " << idx << std::endl;
       fWave1Hist[board][chan]->SetPoint( idx, idx, temp );
+      if( fVerbose ) std::cout << "Setting bin content " << idx << std::endl;
       fWave1HistT[board][chan]->SetBinContent( idx, temp );
       temp = static_cast<short>(project_range( formatSample.first+16, formatSample.second+16, std::bitset<32>(inpBuffer[idx])).to_ulong());
-      fWave2[board][chan][idx] = temp;
+      if( fVerbose ) std::cout << temp << std::endl;
+      //fWave2[board][chan][idx] = temp;
+      if( fVerbose ) std::cout << "Setting point " << idx << std::endl;
       fWave2Hist[board][chan]->SetPoint( idx, idx, temp );
+      if( fVerbose ) std::cout << "Setting bin content " << idx << std::endl;
       fWave2HistT[board][chan]->SetBinContent( idx, temp );
       //temp = static_cast<bool>(project_range(  formatDP1.first      , formatDP1.second      , std::bitset<32>(inpBuffer[idx])).to_ulong());
       //fDigitalProbe1[board][chan]->SetPoint( idx, idx/2, temp );
@@ -242,6 +256,15 @@ void SpyServerRU::UnpackHeader( uint32_t* inpBuffer, uint32_t& aggLength, uint32
   channelMask                = inpBuffer[1+offset]&0xFF;
   uint32_t aggregateCounter  = inpBuffer[2+offset]&0x7FFFFF;
   uint32_t aggregateTimeTag  = inpBuffer[3+offset];
+
+  if( this->fVerbose ){
+    std::cout << "Aggregate Length: " << aggLength << std::endl;
+    std::cout << "Board: " << board << std::endl;
+    std::cout << "Board Fail Flag: " << boardFailFlag << std::endl;
+    std::cout << "Channel Mask: " << channelMask << std::endl;
+    std::cout << "Aggregate Counter: " << aggregateCounter << std::endl;
+    std::cout << "Aggregate Time Tag: " << aggregateTimeTag << std::endl;
+  }
 
 }
 
@@ -357,6 +380,16 @@ void SpyServerRU::UnpackPHA( uint32_t* inpBuffer, uint32_t& board, std::bitset<8
 	  
       }
       else extras2 = 0;
+
+      if( this->fVerbose ){
+        std::cout << "Board: " << board << std::endl;
+        std::cout << "Channel: " << chanNum << std::endl;
+        std::cout << "Energy: " << energy << std::endl;
+        std::cout << "Time Stamp: " << tstamp << std::endl;
+        std::cout << "Fine Time Stamp: " << fineTS << std::endl;
+        std::cout << "Extras: " << extras << std::endl;
+        std::cout << "Extras2: " << extras2 << std::endl;
+      }
 
       if( dataForm.CheckEnabled( "Trace" ) && fWaveUpdateMap[board][chanNum] ){
         if( waveThread != nullptr ){
@@ -498,7 +531,7 @@ void SpyServerRU::UnpackPSD( uint32_t* inpBuffer, uint32_t& board, std::bitset<8
             waveThread->join( );
             delete waveThread;
             waveThread = nullptr;
-            numSamples = dataForm.GetConfig( "NumSamples" )/2;
+            numSamples = dataForm.GetConfig( "NumSamples" ) / 2;
             delete waveBuffer;
             waveBuffer = nullptr;
             waveBuffer = new uint32_t[numSamples];
@@ -593,6 +626,8 @@ void SpyServerRU::GetNextEvent( ){
 
   }
 
+  delete []buffer;
+
 }
 
 void SpyServerRU::rootServer( ){
@@ -627,7 +662,7 @@ void SpyServerRU::rootServer( ){
       std::vector<TH1F*> histograms;
       for( auto it = fEnergyHist.begin(); it != fEnergyHist.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          histograms.push_back( (TH1F*)(*jt) );
+          histograms.push_back( (TH1F*)(*jt)->Clone( ) );
         }
       }
       
@@ -641,7 +676,7 @@ void SpyServerRU::rootServer( ){
       histograms.clear();
       for( auto it = fQshortHist.begin(); it != fQshortHist.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          histograms.push_back( (TH1F*)(*jt) );
+          histograms.push_back( (TH1F*)(*jt)->Clone( ) );
         }
       }
 
@@ -655,7 +690,7 @@ void SpyServerRU::rootServer( ){
       histograms.clear();
       for( auto it = fQlongHist.begin(); it != fQlongHist.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          histograms.push_back( (TH1F*)(*jt) );
+          histograms.push_back( (TH1F*)(*jt)->Clone( ) );
         }
       }
 
@@ -669,7 +704,7 @@ void SpyServerRU::rootServer( ){
       std::vector<TH1F*> waveHist;
       for( auto it = fWave1HistT.begin(); it != fWave1HistT.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          waveHist.push_back( (TH1F*)(*jt) );
+          waveHist.push_back( (TH1F*)(*jt)->Clone( ) );
         }
       }
 
@@ -683,7 +718,7 @@ void SpyServerRU::rootServer( ){
       waveHist.clear();
       for( auto it = fWave2HistT.begin(); it != fWave2HistT.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          waveHist.push_back( (TH1F*)(*jt) );
+          waveHist.push_back( (TH1F*)(*jt)->Clone( ) );
         }
       }
 
