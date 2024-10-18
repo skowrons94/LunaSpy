@@ -662,7 +662,7 @@ void SpyServerRU::rootServer( ){
       std::vector<TH1F*> histograms;
       for( auto it = fEnergyHist.begin(); it != fEnergyHist.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          histograms.push_back( (TH1F*)(*jt)->Clone( ) );
+          histograms.push_back( (TH1F*)(*jt) );
         }
       }
       
@@ -676,7 +676,7 @@ void SpyServerRU::rootServer( ){
       histograms.clear();
       for( auto it = fQshortHist.begin(); it != fQshortHist.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          histograms.push_back( (TH1F*)(*jt)->Clone( ) );
+          histograms.push_back( (TH1F*)(*jt) );
         }
       }
 
@@ -690,7 +690,7 @@ void SpyServerRU::rootServer( ){
       histograms.clear();
       for( auto it = fQlongHist.begin(); it != fQlongHist.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          histograms.push_back( (TH1F*)(*jt)->Clone( ) );
+          histograms.push_back( (TH1F*)(*jt) );
         }
       }
 
@@ -704,7 +704,7 @@ void SpyServerRU::rootServer( ){
       std::vector<TH1F*> waveHist;
       for( auto it = fWave1HistT.begin(); it != fWave1HistT.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          waveHist.push_back( (TH1F*)(*jt)->Clone( ) );
+          waveHist.push_back( (TH1F*)(*jt) );
         }
       }
 
@@ -718,7 +718,7 @@ void SpyServerRU::rootServer( ){
       waveHist.clear();
       for( auto it = fWave2HistT.begin(); it != fWave2HistT.end(); it++ ){
         for( auto jt = it->begin(); jt != it->end(); jt++ ){
-          waveHist.push_back( (TH1F*)(*jt)->Clone( ) );
+          waveHist.push_back( (TH1F*)(*jt) );
         }
       }
 
@@ -727,6 +727,8 @@ void SpyServerRU::rootServer( ){
           message.WriteObject(hist);
           clientSocket->Send(message);
         }
+
+      this->UpdateWave( );
 
     }
 

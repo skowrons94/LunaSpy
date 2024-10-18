@@ -23,6 +23,7 @@ include_directories(
 add_executable(LunaSpy
   ${SRC_DIR}/main.cpp
   ${SRC_DIR}/SpyServerRU.cc
+  ${SRC_DIR}/SpyServerBU.cc
   ${SRC_DIR}/XDAQSpy.cc
   ${SRC_DIR}/DataFrame.cc
   ${SRC_DIR}/DataFrameBuilderPHA.cc

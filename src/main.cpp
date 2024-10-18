@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "SpyServerRU.h"
+#include "SpyServerBU.h"
 
 int main(int argc, char* argv[]) {
 
@@ -32,16 +33,22 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    SpyServerRU* server = new SpyServerRU(names, channels, firmware, run, "localhost");
+    SpyServerRU* serverRU = new SpyServerRU(names, channels, firmware, run, "localhost");
+    SpyServerBU* serverBU = new SpyServerBU(names, channels, run, "localhost");
 
-    server->Start( );
+    serverRU->Start( );
+    serverBU->Start( );
 
-    while( server->startCall ){
+    while( serverRU->startCall ){
         sleep(1);
-        server->Save( );
+        serverRU->Save( );
+        if( serverBU->startCall ){
+            serverBU->Save( );
+        }
     }
 
-    delete server;
+    delete serverRU;
+    delete serverBU;
 
     return 0;
 }
