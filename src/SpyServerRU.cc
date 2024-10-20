@@ -33,6 +33,9 @@ SpyServerRU::SpyServerRU( std::vector<std::string> names, std::vector<int> chann
   // Initializing the histograms  
   Initialize( );
 
+  // Initialize calibration
+  InitializeCalibration( );
+
   // Initializing XDAQSpy
   xdaq = new XDAQSpy( );
   
@@ -84,6 +87,39 @@ void SpyServerRU::Initialize( ){
     }
   }
 
+}
+
+void SpyServerRU::InitializeCalibration( ){
+
+  // Read the file in calib/{board_name}_{board_id}.cal file
+  // In there columns of a and b parameters for each channel are stored
+  // If file does not exists, set a = 0 and b = 1
+
+  std::ifstream file;
+  std::string line;
+  std::string name;
+  std::string board;
+  std::string path = "calib/";
+
+  for( int i = 0; i < fNames.size( ); i++ ){
+    name = fNames[i];
+    board = std::to_string( i );
+    file.open( path + name + "_" + board + ".cal" );
+    if( file.is_open( ) ){
+      for( int chan = 0; chan < fChannels[i]; chan++ ){
+        std::getline( file, line );
+        std::istringstream iss( line );
+        iss >> fCalibrationA[i][chan][0] >> fCalibrationB[i][chan][0];
+      }
+    }
+    else{
+      for( int chan = 0; chan < fChannels[i]; chan++ ){
+        fCalibrationA[i][chan][0] = 0;
+        fCalibrationB[i][chan][0] = 1;
+      }
+    }
+    file.close( );
+  }
 }
 
 void SpyServerRU::Reset( ){
@@ -419,6 +455,8 @@ void SpyServerRU::UnpackPHA( uint32_t* inpBuffer, uint32_t& board, std::bitset<8
 
       // Filling ROOT files
       fEnergy[board][chanNum][energy]++;
+
+      energy = fCalibrationA[board][chanNum][0]*energy + fCalibrationB[board][chanNum][0];
       fEnergyHist[board][chanNum]->Fill( energy );
 
     }

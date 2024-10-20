@@ -37,6 +37,7 @@ public:
   ~SpyServerBU( );
 
   void InitializeROOT( );
+  void InitializeCalibration( );
 
   bool Connect( );                                         // Triggers the connection for XDAQSpy
   void Disconnect( );                                      // Triggers the disconnection for XDAQSpy
@@ -121,6 +122,10 @@ private:
   TServerSocket* serverSocket;
   TSocket* clientSocket;
   boost::thread* rootThread;
+
+  // Calibration
+  std::vector< std::vector< std::vector<float> > > fCalibrationA;
+  std::vector< std::vector< std::vector<float> > > fCalibrationB;
   
 };
 

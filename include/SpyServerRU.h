@@ -29,6 +29,7 @@ public:
   ~SpyServerRU( );
 
   void Initialize( );
+  void InitializeCalibration( );
   void Reset( );
   void Save( );
 
@@ -106,6 +107,10 @@ private:
   TServerSocket* serverSocket;
   TSocket* clientSocket;
   boost::thread* rootThread;
+
+  // Calibration
+  std::vector< std::vector< std::vector<float> > > fCalibrationA;
+  std::vector< std::vector< std::vector<float> > > fCalibrationB;
   
 };
 

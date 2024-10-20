@@ -74,6 +74,39 @@ void SpyServerBU::InitializeROOT( ){
 
 }
 
+void SpyServerRU::InitializeCalibration( ){
+
+  // Read the file in calib/{board_name}_{board_id}.cal file
+  // In there columns of a and b parameters for each channel are stored
+  // If file does not exists, set a = 0 and b = 1
+
+  std::ifstream file;
+  std::string line;
+  std::string name;
+  std::string board;
+  std::string path = "calib/";
+
+  for( int i = 0; i < fNames.size( ); i++ ){
+    name = fNames[i];
+    board = std::to_string( i );
+    file.open( path + name + "_" + board + ".cal" );
+    if( file.is_open( ) ){
+      for( int chan = 0; chan < fChannels[i]; chan++ ){
+        std::getline( file, line );
+        std::istringstream iss( line );
+        iss >> fCalibrationA[i][chan][0] >> fCalibrationB[i][chan][0];
+      }
+    }
+    else{
+      for( int chan = 0; chan < fChannels[i]; chan++ ){
+        fCalibrationA[i][chan][0] = 0;
+        fCalibrationB[i][chan][0] = 1;
+      }
+    }
+    file.close( );
+  }
+}
+
 void SpyServerBU::Reset( ){
 
 }
@@ -141,6 +174,8 @@ void SpyServerBU::Stop( ){
 
 void SpyServerBU::UnpackPHA( char* buffer, uint32_t& offset, uint32_t& boardId, uint32_t& chan, uint32_t& evtNum ){
   memcpy( &fDataPHA, buffer+offset, sizeof(fDataPHA) );
+
+  fDataPHA.energy = fCalibrationA[boardId][chan][0] + fCalibrationB[boardId][chan][0] * fDataPHA.energy;
 
   if( evtNum == 1 ) fEnergyAnti[boardId][chan]->Fill( fDataPHA.energy );
   else{
