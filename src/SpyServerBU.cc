@@ -74,7 +74,7 @@ void SpyServerBU::InitializeROOT( ){
 
 }
 
-void SpyServerRU::InitializeCalibration( ){
+void SpyServerBU::InitializeCalibration( ){
 
   // Read the file in calib/{board_name}_{board_id}.cal file
   // In there columns of a and b parameters for each channel are stored
