@@ -105,17 +105,19 @@ void SpyServerRU::InitializeCalibration( ){
     name = fNames[i];
     board = std::to_string( i );
     file.open( path + name + "_" + board + ".cal" );
+    fCalibrationA.push_back( std::vector<float> ( fChannels[i] ) );
+    fCalibrationB.push_back( std::vector<float> ( fChannels[i] ) );
     if( file.is_open( ) ){
       for( int chan = 0; chan < fChannels[i]; chan++ ){
         std::getline( file, line );
         std::istringstream iss( line );
-        iss >> fCalibrationA[i][chan][0] >> fCalibrationB[i][chan][0];
+        iss >> fCalibrationA[i][chan] >> fCalibrationB[i][chan];
       }
     }
     else{
       for( int chan = 0; chan < fChannels[i]; chan++ ){
-        fCalibrationA[i][chan][0] = 0;
-        fCalibrationB[i][chan][0] = 1;
+        fCalibrationA[i][chan] = 0;
+        fCalibrationB[i][chan] = 1;
       }
     }
     file.close( );
@@ -456,7 +458,7 @@ void SpyServerRU::UnpackPHA( uint32_t* inpBuffer, uint32_t& board, std::bitset<8
       // Filling ROOT files
       fEnergy[board][chanNum][energy]++;
 
-      energy = fCalibrationA[board][chanNum][0]*energy + fCalibrationB[board][chanNum][0];
+      energy = fCalibrationA[board][chanNum] + fCalibrationB[board][chanNum] * energy;
       fEnergyHist[board][chanNum]->Fill( energy );
 
     }

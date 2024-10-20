@@ -124,8 +124,8 @@ private:
   boost::thread* rootThread;
 
   // Calibration
-  std::vector< std::vector< std::vector<float> > > fCalibrationA;
-  std::vector< std::vector< std::vector<float> > > fCalibrationB;
+  std::vector< std::vector<float> > fCalibrationA;
+  std::vector< std::vector<float> > fCalibrationB;
   
 };
 

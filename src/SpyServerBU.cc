@@ -90,17 +90,19 @@ void SpyServerBU::InitializeCalibration( ){
     name = fNames[i];
     board = std::to_string( i );
     file.open( path + name + "_" + board + ".cal" );
+    fCalibrationA.push_back( std::vector<float> ( fChannels[i] ) );
+    fCalibrationB.push_back( std::vector<float> ( fChannels[i] ) );
     if( file.is_open( ) ){
       for( int chan = 0; chan < fChannels[i]; chan++ ){
         std::getline( file, line );
         std::istringstream iss( line );
-        iss >> fCalibrationA[i][chan][0] >> fCalibrationB[i][chan][0];
+        iss >> fCalibrationA[i][chan] >> fCalibrationB[i][chan];
       }
     }
     else{
       for( int chan = 0; chan < fChannels[i]; chan++ ){
-        fCalibrationA[i][chan][0] = 0;
-        fCalibrationB[i][chan][0] = 1;
+        fCalibrationA[i][chan] = 0;
+        fCalibrationB[i][chan] = 1;
       }
     }
     file.close( );
@@ -175,7 +177,7 @@ void SpyServerBU::Stop( ){
 void SpyServerBU::UnpackPHA( char* buffer, uint32_t& offset, uint32_t& boardId, uint32_t& chan, uint32_t& evtNum ){
   memcpy( &fDataPHA, buffer+offset, sizeof(fDataPHA) );
 
-  fDataPHA.energy = fCalibrationA[boardId][chan][0] + fCalibrationB[boardId][chan][0] * fDataPHA.energy;
+  fDataPHA.energy = fCalibrationA[boardId][chan] + fCalibrationB[boardId][chan] * fDataPHA.energy;
 
   if( evtNum == 1 ) fEnergyAnti[boardId][chan]->Fill( fDataPHA.energy );
   else{
