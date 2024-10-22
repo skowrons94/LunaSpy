@@ -15,6 +15,7 @@ SpyServerBU::SpyServerBU( std::vector<std::string> names, std::vector<int> chann
 
   // Initializing the histograms  
   InitializeROOT( );
+  InitializeCalibration( );
 
   // Initializing XDAQSpy
   xdaq = new XDAQSpy( );  
@@ -133,7 +134,7 @@ void SpyServerBU::Save( ){
 bool SpyServerBU::Connect( ){
 
   // Connects to the XDAQ spy port
-  if( xdaq->Connect( hostname, 10003 ) ) return true;
+  if( xdaq->Connect( hostname, 10000 ) ) return true;
   else return false;
 
 }
@@ -162,7 +163,7 @@ void SpyServerBU::Stop( ){
 
   // It is called just before the acquistion stops.
 
-    if( startCall ){
+  if( startCall ){
 
     startCall = 0;
     stopCall  = 1;
@@ -180,9 +181,7 @@ void SpyServerBU::UnpackPHA( char* buffer, uint32_t& offset, uint32_t& boardId, 
   fDataPHA.energy = fCalibrationA[boardId][chan] + fCalibrationB[boardId][chan] * fDataPHA.energy;
 
   if( evtNum == 1 ) fEnergyAnti[boardId][chan]->Fill( fDataPHA.energy );
-  else{
-    fEnergyBuffer.push_back( fDataPHA.energy );
-  }
+  fEnergyBuffer.push_back( fDataPHA.energy );
 
   if( fVerbose )
   {
@@ -208,12 +207,14 @@ void SpyServerBU::GetNextEvent( ){
   
   uint32_t length, aggSize, evtSize, evtNum, evt, boardId, chan;
   while( startCall ){
+
+    //std::cout << "Getting next buffer" << std::endl;
     
     length = xdaq->GetNextBuffer( buffer );
 
     if( fVerbose )
     {
-      std::cout << "Buffer Size: "   << length << std::endl;
+      //std::cout << "Buffer Size: "   << length << std::endl;
     }
 
     uint32_t offset = 0;
@@ -249,9 +250,9 @@ void SpyServerBU::GetNextEvent( ){
 
         if( fVerbose )
         {
-//          std::cout << "Board ID: "   << boardId << std::endl;
-//          std::cout << "Event Size: " << evtSize << std::endl;
-//          std::cout << "Channel: "    << chan    << std::endl;
+          std::cout << "Board ID: "   << boardId << std::endl;
+          std::cout << "Event Size: " << evtSize << std::endl;
+          std::cout << "Channel: "    << chan    << std::endl;
         }
       
         offset += sizeof( dataKey );

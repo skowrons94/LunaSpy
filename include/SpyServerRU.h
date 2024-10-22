@@ -14,6 +14,7 @@
 #include <TMessage.h>
 #include <TH1F.h>
 #include <TGraph.h>
+#include <TFile.h>
 
 #include <boost/thread.hpp>
 
@@ -64,6 +65,8 @@ public:
   int stopCall;
   
 private:
+
+  TFile* fFile; // ROOT file to save the histograms
 
   std::vector<std::string> fNames; // Container for the board names
   std::vector<int> fChannels; // Container for the channel numbers
