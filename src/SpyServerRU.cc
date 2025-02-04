@@ -38,6 +38,10 @@ SpyServerRU::SpyServerRU( std::vector<std::string> names, std::vector<int> chann
 
   // Initializing XDAQSpy
   xdaq = new XDAQSpy( );
+
+  // Initialize rates
+  ratesMonitor.setName("BGO");
+  ratesMonitor.setHost("localhost",2003);
   
 }
 
@@ -472,6 +476,13 @@ void SpyServerRU::UnpackPHA( uint32_t* inpBuffer, uint32_t& board, std::bitset<8
 
       energy = fCalibrationA[board][chanNum] + fCalibrationB[board][chanNum] * energy;
       fEnergyHist[board][chanNum]->Fill( energy );
+
+      if(ratesMonitor.values.find(chanNum) == ratesMonitor.values.end()) ratesMonitor.values[chanNum].Init();
+      ratesMonitor.values[chanNum].time = tstamp;
+	    ++ratesMonitor.values[chanNum].totalEvents ;
+	    if( pur )  ++ratesMonitor.values[chanNum].pileEvents ;
+	    if( satu ) ++ratesMonitor.values[chanNum].satuEvents ;
+	    if( lost ) ++ratesMonitor.values[chanNum].lostEvents ;
 
     }
 

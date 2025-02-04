@@ -27,6 +27,7 @@ add_executable(RUSpy
   ${SRC_DIR}/DataFrame.cc
   ${SRC_DIR}/DataFrameBuilderPHA.cc
   ${SRC_DIR}/DataFrameBuilderPSD.cc
+  ${SRC_DIR}/Stats.cc
   ${SRC_DIR}/Utils.cc
 )
 

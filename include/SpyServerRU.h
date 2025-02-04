@@ -21,6 +21,7 @@
 #include "XDAQSpy.h"
 #include "DataFrame.h"
 #include "Utils.h"
+#include "Stats.h"
 
 class SpyServerRU {
 
@@ -91,6 +92,8 @@ private:
   std::map<int,int> fRO; // Container for Roll Over flags
 
   XDAQSpy* xdaq; // Connects to the XDAQ spy
+
+  Stats ratesMonitor; // Monitors the rates
 
   boost::thread* spyThread;
 
