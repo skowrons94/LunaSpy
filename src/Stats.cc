@@ -63,7 +63,7 @@ void Stats::Thread( )
 
     for( auto ch = values.begin(); ch != values.end() ; ++ch ){
       deltaT = ch->second.time - ch->second.timePrev;
-      deltaT *= 1e-12;
+      deltaT *= 1e-9;
       ch->second.timePrev = ch->second.time;
 
       ch->second.lostRate  = ch->second.lostEvents  / deltaT;

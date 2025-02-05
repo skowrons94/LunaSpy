@@ -150,7 +150,7 @@ void SpyServerRU::Reset( ){
 void SpyServerRU::Save( ){
 
   // Save the histograms to a file
-  std::ofstream file;
+  /*std::ofstream file;
 
   for( int i = 0; i < fChannels.size( ); i++ ){
     for( int chan = 0; chan < fChannels[i]; chan++ ){
@@ -162,7 +162,7 @@ void SpyServerRU::Save( ){
 
       file.close( );
     }
-  }
+  }*/
 
   // Save the ROOT file
   std::string filename = "data/run" + std::to_string(run) + "/run" + std::to_string(run) + ".root";
