@@ -165,16 +165,16 @@ void SpyServerRU::Save( ){
   }*/
 
   // Save the ROOT file
-  std::string filename = "data/run" + std::to_string(run) + "/run" + std::to_string(run) + ".root";
-  fFile = new TFile( filename.c_str( ), "RECREATE" );
+  //std::string filename = "data/run" + std::to_string(run) + "/run" + std::to_string(run) + ".root";
+  //fFile = new TFile( filename.c_str( ), "RECREATE" );
 
-  for( int i = 0; i < fChannels.size( ); i++ ){
-    for( int chan = 0; chan < fChannels[i]; chan++ ){
-      fEnergyHist[i][chan]->Write( );
-    }
-  }
+  //for( int i = 0; i < fChannels.size( ); i++ ){
+  //  for( int chan = 0; chan < fChannels[i]; chan++ ){
+  //    fEnergyHist[i][chan]->Write( );
+  //  }
+  //}
 
-  fFile->Close( );
+  //fFile->Close( );
 
 }
 
