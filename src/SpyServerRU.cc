@@ -478,7 +478,7 @@ void SpyServerRU::UnpackPHA( uint32_t* inpBuffer, uint32_t& board, std::bitset<8
       fEnergyHist[board][chanNum]->Fill( energy );
 
       if(ratesMonitor.values.find(chanNum) == ratesMonitor.values.end()) ratesMonitor.values[chanNum].Init();
-      ratesMonitor.values[chanNum].time = tstamp;
+      ratesMonitor.values[chanNum].time = tstamp * 10; // FIXME: Get the timestamp conversion from DataFrame
 	    ++ratesMonitor.values[chanNum].totalEvents ;
 	    if( pur )  ++ratesMonitor.values[chanNum].pileEvents ;
 	    if( satu ) ++ratesMonitor.values[chanNum].satuEvents ;
