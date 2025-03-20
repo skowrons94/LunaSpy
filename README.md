@@ -12,7 +12,7 @@ To build and install the repository:
 
 ```bash
 git clone https://github.com/skowrons94/LunaSpy.git
-cd RUReader
+cd LunaSpy
 mkdir build 
 cd build/
 cmake ..
